@@ -1,6 +1,21 @@
 import { create } from "zustand";
 import axios from "axios";
 
+interface LogObject {
+  logs: LogInstance[];
+}
+
+interface LogInstance {
+  funcName: string;
+  level: string;
+  lineno: number;
+  message: string;
+  module: string;
+  remote_addr: string;
+  timestamp: string;
+  url: string;
+}
+
 interface Request {
   request_id: number;
   query: string;
@@ -20,7 +35,7 @@ interface AuthState {
 interface AppState extends AuthState {
   requests: Request[];
   currentResult: Result | null;
-  logs: string[];
+  logs: LogInstance[];
   isLoading: boolean;
   error: string | null;
   login: (code: string) => Promise<void>;
@@ -133,9 +148,17 @@ export const useAppStore = create<AppState>((set) => ({
   fetchLogs: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.get<string[]>("/logs");
+      const response = await api.get<LogObject>("/logs");
 
-      set({ logs: response.data, isLoading: false });
+      console.log("Raw API response:", response.data);
+
+      if (Array.isArray(response.data.logs)) {
+        console.log("Logs array:", response.data.logs);
+        set({ logs: response.data.logs, isLoading: false });
+      } else {
+        console.error("Unexpected response format:", response.data);
+        set({ error: "Unexpected response format", isLoading: false });
+      }
     } catch (error) {
       console.error("Error fetching logs:", error);
       set({ error: "Failed to fetch logs", isLoading: false });
