@@ -16,7 +16,11 @@ import {
   TableCell,
 } from "@nextui-org/react";
 import { motion } from "framer-motion";
-import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+  EyeIcon,
+} from "@heroicons/react/24/solid";
 import toast, { Toaster } from "react-hot-toast";
 import { Spinner } from "@nextui-org/react";
 
@@ -100,7 +104,7 @@ function DashboardContent() {
           transition={{ duration: 0.5 }}
         >
           <Card className="mb-4 overflow-hidden transition-all duration-300 hover:shadow-lg">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-500 opacity-75" />
+            <div className="absolute inset-0" />
             <CardHeader className="relative z-10">
               <h3 className="text-xl font-bold text-white">Result</h3>
             </CardHeader>
@@ -111,13 +115,16 @@ function DashboardContent() {
                 ) : (
                   <XCircleIcon className="w-6 h-6 text-red-400" />
                 )}
-                <p className="text-lg font-semibold text-white">
-                  Status: {currentResult.status}
+                <p className="text-lg font-light text-white">
+                  Status: {currentResult.status.toUpperCase()}
                 </p>
               </div>
-              <p className="text-white text-opacity-90">
-                Result: {currentResult.result}
-              </p>
+              <div className="flex items-center space-x-2 mb-2">
+                <EyeIcon className="w-6 h-6 text-white" />
+                <p className="text-lg font-light text-white text-opacity-90">
+                  Result: {currentResult.result ?? "No result available"}
+                </p>
+              </div>
             </CardBody>
           </Card>
         </motion.div>
