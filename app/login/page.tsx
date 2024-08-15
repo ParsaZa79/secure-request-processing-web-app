@@ -2,7 +2,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button, Card, Image, Spacer } from "@nextui-org/react";
 import { FaGoogle } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -10,7 +10,6 @@ import { motion } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";
 
 function LoginComponent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const { login } = useAuth();
