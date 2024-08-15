@@ -1,6 +1,17 @@
 import { create } from "zustand";
 import axios from "axios";
 
+interface UserInfo {
+  user: User;
+  sessionToken: string;
+}
+
+interface User {
+  email: string;
+  name: string;
+  picture: string | null;
+}
+
 interface LogObject {
   logs: LogInstance[];
 }
@@ -48,7 +59,7 @@ interface AppState extends AuthState {
 }
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -79,16 +90,16 @@ export const useAppStore = create<AppState>((set) => ({
   login: async (code: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post("/api/auth/google", { code });
-      const { sessionToken } = response.data;
+      console.log("Logging in with code:", code);
+
+      const response = await api.post<UserInfo>("/api/auth/google", { code });
+      const sessionToken = response.data.sessionToken;
 
       localStorage.setItem("sessionToken", sessionToken);
       set({
         isAuthenticated: true,
         sessionToken,
-        user: {
-          /* Add user data here */
-        },
+        user: response.data.user,
         isLoading: false,
       });
     } catch (error) {
