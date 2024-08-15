@@ -1,53 +1,175 @@
-# Next.js & NextUI Template
+# NextJS Secure Request Processing Web App
 
-This is a template for creating applications using Next.js 14 (app directory) and NextUI (v2).
+This is a NextJS-based web application that focuses on secure request processing. It includes features like authentication, a dashboard, and theming capabilities.
 
-[Try it on CodeSandbox](https://githubbox.com/nextui-org/next-app-template)
+## Features
 
-## Technologies Used
+- NextJS framework for server-side rendering and optimal performance
+- Authentication system with Google integration
+- Dashboard for authenticated users
+- Theme switching capability
+- Responsive design with Tailwind CSS
+- Docker support for easy deployment and development
 
-- [Next.js 14](https://nextjs.org/docs/getting-started)
-- [NextUI v2](https://nextui.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Tailwind Variants](https://tailwind-variants.org)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Framer Motion](https://www.framer.com/motion/)
-- [next-themes](https://github.com/pacocoursey/next-themes)
+## Authentication Flow
 
-## How to Use
+### Server-side Authentication
 
-### Use the template with create-next-app
+The server-side authentication process is handled in the `app/api/auth/google/route.ts` file. Here's a diagram of the flow:
 
-To create a new project based on this template using `create-next-app`, run the following command:
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant Google
 
-```bash
-npx create-next-app -e https://github.com/nextui-org/next-app-template
+    Client->>Server: POST /api/auth/google (with auth code)
+    Server->>Google: Exchange code for tokens
+    Google-->>Server: Return tokens
+    Server->>Google: Get user info
+    Google-->>Server: Return user info
+    Server->>Server: Create JWT session token
+    Server-->>Client: Return session token
 ```
 
-### Install dependencies
+### Client-side Authentication
 
-You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
+The client-side authentication is managed by the `useAuth` hook in `app/hooks/useAuth.ts`. Here's a diagram of the authentication flow:
 
-```bash
-npm install
+```mermaid
+stateDiagram-v2
+    [*] --> CheckAuth
+    CheckAuth --> LoggedOut: No token or expired
+    CheckAuth --> LoggedIn: Valid token
+    LoggedOut --> Login
+    Login --> LoggedIn: Successful login
+    LoggedIn --> Dashboard
+    LoggedIn --> Logout
+    Logout --> LoggedOut
+    LoggedOut --> [*]
 ```
 
-### Run the development server
+## Project Structure
 
-```bash
+```
+.
+├── app/
+│   ├── api/
+│   │   └── auth/
+│   │       └── google/
+│   ├── components/
+│   ├── dashboard/
+│   ├── hooks/
+│   └── login/
+├── config/
+├── pages/
+│   └── api/
+├── public/
+├── styles/
+├── types/
+├── .dockerignore
+├── .env
+├── .eslintignore
+├── .eslintrc.json
+├── .gitignore
+├── .npmrc
+├── docker-compose.yml
+├── Dockerfile
+├── LICENSE
+├── next.config.js
+├── package.json
+├── postcss.config.js
+├── README.md
+├── tailwind.config.js
+└── tsconfig.json
+```
+
+## Prerequisites
+
+- Node.js (v14 or later)
+- npm or yarn
+- Docker and Docker Compose
+
+## Installation
+
+1. Clone the repository:
+   ```
+   git clone <repository-url>
+   cd secure-request-processing-web-app
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+   or
+   ```
+   yarn install
+   ```
+
+3. Set up environment variables:
+   Create a `.env` file in the root directory and add the necessary environment variables. You can use the `.env.example` file as a template if provided.
+
+## Running the Project
+
+### Development Mode
+
+To run the project in development mode:
+
+```
 npm run dev
 ```
-
-### Setup pnpm (optional)
-
-If you are using `pnpm`, you need to add the following code to your `.npmrc` file:
-
-```bash
-public-hoist-pattern[]=*@nextui-org/*
+or
+```
+yarn dev
 ```
 
-After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
+### Production Mode
+
+To build and run the project in production mode:
+
+```
+npm run build
+npm start
+```
+or
+```
+yarn build
+yarn start
+```
+
+### Using Docker Compose
+
+To run the project using Docker Compose:
+
+1. Make sure you have Docker and Docker Compose installed on your system.
+
+2. Create a `.env` file in the root directory with the necessary environment variables.
+
+3. Run the following command:
+
+```
+docker compose --env-file .env up --build
+```
+
+This command will build the Docker image (if not already built or if there are changes) and start the containers defined in the `docker-compose.yml` file. The `--env-file .env` flag ensures that the environment variables from the `.env` file are used.
+
+To stop the containers, use:
+
+```
+docker compose down
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-Licensed under the [MIT license](https://github.com/nextui-org/next-app-template/blob/main/LICENSE).
+This project is licensed under the terms of the license file included in the repository. See the [LICENSE](LICENSE) file for details.
