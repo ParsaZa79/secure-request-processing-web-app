@@ -108,7 +108,20 @@ stateDiagram-v2
    ```
 
 3. Set up environment variables:
-   Create a `.env` file in the root directory and add the necessary environment variables. You can use the `.env.example` file as a template if provided.
+   Create a `.env` file in the root directory and add the necessary environment variables. You can use the `.env.example` file as a template if provided. Your `.env` file should look like this:
+
+   ```
+   NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
+   NEXT_PUBLIC_GOOGLE_CLIENT_SECRET=your_google_client_secret
+   NEXT_PUBLIC_BASE_URL=http://localhost:3000
+   NEXTAUTH_SECRET=your_nextauth_secret
+   NEXT_PUBLIC_JWT_SECRET=your_jwt_secret
+   ```
+
+   Replace `your_google_client_id`, `your_google_client_secret`, `your_nextauth_secret`, and `your_jwt_secret` with your actual values. The `NEXT_PUBLIC_BASE_URL` can remain as `http://localhost:3000` for local development.
+
+   Note: Make sure to keep your `.env` file secure and never commit it to version control. Add it to your `.gitignore` file if it's not already there.
+
 
 ## Running the Project
 
