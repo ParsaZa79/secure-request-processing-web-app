@@ -1,16 +1,18 @@
 import { create } from "zustand";
 import axios from "axios";
+import jwt from "jsonwebtoken";
 
 interface UserInfo {
-  user: User;
   session_token: string;
 }
 
 interface User {
-  email: string;
-  username: string;
+  id: string;
+  username: string | null;
+  email: string | null;
   name: string;
   picture: string | null;
+  exp: number;
 }
 
 interface LogObject {
@@ -95,12 +97,13 @@ export const useAppStore = create<AppState>((set) => ({
     try {
       const response = await api.post<UserInfo>("/api/auth/google", { code });
       const sessionToken = response.data.session_token;
+      const user = jwt.decode(sessionToken) as User;
 
       localStorage.setItem("sessionToken", sessionToken);
       set({
         isAuthenticated: true,
         sessionToken,
-        user: response.data.user,
+        user: user,
         isLoading: false,
       });
     } catch (error) {
@@ -114,14 +117,14 @@ export const useAppStore = create<AppState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.post<UserInfo>("/api/auth/github", { code });
-      console.log("GitHub login response:", response);
       const sessionToken = response.data.session_token;
+      const user = jwt.decode(sessionToken) as User;
 
       localStorage.setItem("sessionToken", sessionToken);
       set({
         isAuthenticated: true,
         sessionToken,
-        user: response.data.user,
+        user: user,
         isLoading: false,
       });
     } catch (error) {
