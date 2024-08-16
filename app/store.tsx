@@ -3,11 +3,12 @@ import axios from "axios";
 
 interface UserInfo {
   user: User;
-  sessionToken: string;
+  session_token: string;
 }
 
 interface User {
   email: string;
+  username: string;
   name: string;
   picture: string | null;
 }
@@ -49,7 +50,8 @@ interface AppState extends AuthState {
   logs: LogInstance[];
   isLoading: boolean;
   error: string | null;
-  login: (code: string) => Promise<void>;
+  googleLogin: (code: string) => Promise<void>;
+  githubLogin: (code: string) => Promise<void>;
   logout: () => void;
   fetchRequests: () => Promise<void>;
   submitRequest: (query: string) => Promise<number>;
@@ -58,8 +60,9 @@ interface AppState extends AuthState {
   setError: (error: string | null) => void;
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+// const API_BASE_URL =
+//   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = "http://localhost:5000";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -87,13 +90,32 @@ export const useAppStore = create<AppState>((set) => ({
 
   setError: (error) => set({ error }),
 
-  login: async (code: string) => {
+  googleLogin: async (code: string) => {
     set({ isLoading: true, error: null });
     try {
-      console.log("Logging in with code:", code);
-
       const response = await api.post<UserInfo>("/api/auth/google", { code });
-      const sessionToken = response.data.sessionToken;
+      const sessionToken = response.data.session_token;
+
+      localStorage.setItem("sessionToken", sessionToken);
+      set({
+        isAuthenticated: true,
+        sessionToken,
+        user: response.data.user,
+        isLoading: false,
+      });
+    } catch (error) {
+      // console.error("Login error:", error);
+      set({ error: "Failed to login", isLoading: false });
+      throw error;
+    }
+  },
+
+  githubLogin: async (code: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.post<UserInfo>("/api/auth/github", { code });
+      console.log("GitHub login response:", response);
+      const sessionToken = response.data.session_token;
 
       localStorage.setItem("sessionToken", sessionToken);
       set({
@@ -105,6 +127,7 @@ export const useAppStore = create<AppState>((set) => ({
     } catch (error) {
       console.error("Login error:", error);
       set({ error: "Failed to login", isLoading: false });
+      throw error;
     }
   },
 
@@ -130,7 +153,7 @@ export const useAppStore = create<AppState>((set) => ({
     try {
       const response = await api.post<{ request_id: number }>(
         "/submit-request",
-        { query },
+        { query }
       );
 
       set({ isLoading: false });
