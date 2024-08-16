@@ -4,15 +4,47 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button, Card, Image, Spacer } from "@nextui-org/react";
-import { FaGoogle } from "react-icons/fa";
+import { FaGoogle, FaGithub } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useCallback } from "react";
 
 import { useAuth } from "../hooks/useAuth";
 
 function LoginComponent() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
-  const { login } = useAuth();
+  const { googleLogin, githubLogin } = useAuth();
+  const [loginProcessed, setLoginProcessed] = useState(false);
+
+  const processLogin = useCallback(
+    async (code: string, state: string) => {
+      if (loginProcessed) return;
+      setLoginProcessed(true);
+      try {
+        if (state === "github") {
+          await githubLogin(code);
+        } else if (state === "google") {
+          await googleLogin(code);
+        } else {
+          throw new Error("Invalid authentication state");
+        }
+      } catch (error) {
+        console.error(`Error during ${state} login:`, error);
+        setError(`Error during ${state} authentication`);
+      }
+    },
+    [githubLogin, googleLogin, loginProcessed],
+  );
+
+  useEffect(() => {
+    const code = searchParams?.get("code");
+    const state = searchParams?.get("state");
+
+    if (code && state) {
+      window.history.replaceState({}, document.title, "/login");
+      processLogin(code, state);
+    }
+  }, [searchParams, processLogin]);
 
   const handleGoogleLogin = () => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -26,23 +58,28 @@ function LoginComponent() {
     const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
     const scope = encodeURIComponent("openid email profile");
     const responseType = "code";
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
+    const state = encodeURIComponent("google");
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}&state=${state}`;
 
     window.location.href = authUrl;
   };
 
-  useEffect(() => {
-    const code = searchParams?.get("code");
+  const handleGithubLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
 
-    if (code) {
-      window.history.replaceState({}, document.title, "/login");
+    if (!clientId) {
+      setError("GitHub Client ID is not set");
 
-      login(code).catch((error) => {
-        console.error("Error during login:", error);
-        setError("Error during authentication");
-      });
+      return;
     }
-  }, [searchParams, login]);
+
+    const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
+    const scope = encodeURIComponent("user:email");
+    const state = encodeURIComponent("github");
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
+
+    window.location.href = authUrl;
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen">
@@ -74,6 +111,13 @@ function LoginComponent() {
               onClick={handleGoogleLogin}
             >
               Sign in with Google
+            </Button>
+            <Button
+              className="w-full bg-gray-800 hover:bg-gray-900 text-white"
+              startContent={<FaGithub />}
+              onClick={handleGithubLogin}
+            >
+              Sign in with GitHub
             </Button>
             <div className="text-center">
               <p className="text-sm text-gray-500">
