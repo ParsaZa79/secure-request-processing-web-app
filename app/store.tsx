@@ -15,6 +15,15 @@ interface User {
   exp: number;
 }
 
+interface UserRequest {
+  id: number;
+  user_query: string;
+  status: string;
+  result: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface LogObject {
   logs: LogInstance[];
 }
@@ -58,13 +67,15 @@ interface AppState extends AuthState {
   fetchRequests: () => Promise<void>;
   submitRequest: (query: string) => Promise<number>;
   getResult: (requestId: number) => Promise<void>;
+  userRequests: UserRequest[];
+  fetchUserRequests: () => Promise<void>;
   fetchLogs: () => Promise<void>;
   setError: (error: string | null) => void;
 }
 
-// const API_BASE_URL =
-//   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+// const API_BASE_URL = "http://localhost:8080";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -89,6 +100,7 @@ export const useAppStore = create<AppState>((set) => ({
   logs: [],
   isLoading: false,
   error: null,
+  userRequests: [],
 
   setError: (error) => set({ error }),
 
@@ -156,7 +168,7 @@ export const useAppStore = create<AppState>((set) => ({
     try {
       const response = await api.post<{ request_id: number }>(
         "/submit-request",
-        { query }
+        { query },
       );
 
       set({ isLoading: false });
@@ -167,6 +179,18 @@ export const useAppStore = create<AppState>((set) => ({
       set({ error: "Failed to submit request", isLoading: false });
 
       return -1;
+    }
+  },
+
+  fetchUserRequests: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.get<{ requests: UserRequest[] }>("/requests");
+
+      set({ userRequests: response.data.requests, isLoading: false });
+    } catch (error) {
+      console.error("Error fetching user requests:", error);
+      set({ error: "Failed to fetch user requests", isLoading: false });
     }
   },
 
