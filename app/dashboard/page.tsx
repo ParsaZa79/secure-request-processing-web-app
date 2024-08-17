@@ -1,6 +1,9 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
+import { format } from 'date-fns';
+
+
 import { useState, useEffect } from "react";
 import {
   Button,
@@ -40,6 +43,8 @@ function DashboardContent() {
     isLoading,
     error,
     setError,
+    userRequests,
+    fetchUserRequests,
   } = useAppStore();
 
   const handleSubmit = async () => {
@@ -64,6 +69,11 @@ function DashboardContent() {
       setError(null);
     }
   }, [error, setError]);
+
+  useEffect(() => {
+    fetchLogs();
+    fetchUserRequests();
+  }, [fetchLogs, fetchUserRequests]);
 
   return (
     <div className="p-8">
@@ -130,7 +140,7 @@ function DashboardContent() {
         </motion.div>
       )}
 
-      <Card>
+      <Card className="mb-4">
         <CardHeader className="flex justify-between items-center">
           <h3 className="text-lg font-semibold">Logs</h3>
           <Button onClick={fetchLogs}>Fetch Logs</Button>
@@ -168,6 +178,64 @@ function DashboardContent() {
           ) : (
             <p>
               No logs available. Click 'Fetch Logs' to retrieve the latest logs.
+            </p>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">User Requests</h3>
+          <Button onClick={fetchUserRequests}>Fetch Requests</Button>
+        </CardHeader>
+        <CardBody>
+          {userRequests.length > 0 ? (
+            <Table aria-label="User Requests table">
+              <TableHeader>
+                <TableColumn>ID</TableColumn>
+                <TableColumn>Query</TableColumn>
+                <TableColumn>Status</TableColumn>
+                <TableColumn>Result</TableColumn>
+                <TableColumn>Created At</TableColumn>
+                <TableColumn>Updated At</TableColumn>
+              </TableHeader>
+              <TableBody>
+                {userRequests.map((request) => (
+                  <TableRow key={request.id}>
+                    <TableCell>{request.id}</TableCell>
+                    <TableCell>{request.user_query}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          request.status === "success"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {request.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{request.result}</TableCell>
+                    <TableCell>
+                      {format(
+                        new Date(request.created_at),
+                        "yyyy-MM-dd HH:mm:ss",
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {format(
+                        new Date(request.updated_at),
+                        "yyyy-MM-dd HH:mm:ss",
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p>
+              No user requests available. Click 'Fetch Requests' to retrieve the
+              latest requests.
             </p>
           )}
         </CardBody>
