@@ -23,6 +23,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   EyeIcon,
+  ArrowTurnDownLeftIcon,
 } from "@heroicons/react/24/solid";
 import toast, { Toaster } from "react-hot-toast";
 import { Spinner } from "@nextui-org/react";
@@ -60,6 +61,22 @@ function DashboardContent() {
       } else {
         toast.error("An unknown error occurred");
       }
+    }
+  };
+
+  const handleRetry = async () => {
+    if (currentResult && currentResult.request_id) {
+      try {
+        await getResult(currentResult.request_id);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          toast.error(err.message);
+        } else {
+          toast.error("An unknown error occurred while retrying");
+        }
+      }
+    } else {
+      toast.error("No current result to retry");
     }
   };
 
@@ -115,12 +132,21 @@ function DashboardContent() {
         >
           <Card className="mb-4 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="absolute inset-0" />
-            <CardHeader className="relative z-10">
+            <CardHeader className="relative z-10 flex justify-between items-center">
               <h3 className="text-xl font-bold text-white">Result</h3>
+              <Button
+                isIconOnly
+                color="primary"
+                aria-label="Retry"
+                onClick={handleRetry}
+                disabled={isLoading}
+              >
+                <ArrowTurnDownLeftIcon className="w-5 h-5" />
+              </Button>
             </CardHeader>
             <CardBody className="relative z-10">
               <div className="flex items-center space-x-2 mb-2">
-                {currentResult.status === "success" ? (
+                {currentResult.status === "completed" ? (
                   <CheckCircleIcon className="w-6 h-6 text-green-400" />
                 ) : (
                   <XCircleIcon className="w-6 h-6 text-red-400" />
