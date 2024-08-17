@@ -33,7 +33,7 @@ function LoginComponent() {
         setError(`Error during ${state} authentication`);
       }
     },
-    [githubLogin, googleLogin, loginProcessed]
+    [githubLogin, googleLogin, loginProcessed],
   );
 
   useEffect(() => {
@@ -61,6 +61,7 @@ function LoginComponent() {
     const state = encodeURIComponent("google");
     const prompt = "select_account";
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}&state=${state}&prompt=${prompt}`; // Add prompt to the URL
+
     window.location.href = authUrl;
   };
 
