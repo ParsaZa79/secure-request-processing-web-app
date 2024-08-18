@@ -1,9 +1,8 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { format } from 'date-fns';
-
-
+import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import {
   Button,
@@ -18,12 +17,12 @@ import {
   TableRow,
   TableCell,
 } from "@nextui-org/react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircleIcon,
   XCircleIcon,
   EyeIcon,
-  ArrowTurnDownLeftIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import toast, { Toaster } from "react-hot-toast";
 import { Spinner } from "@nextui-org/react";
@@ -31,6 +30,43 @@ import { Spinner } from "@nextui-org/react";
 import { UserDropdown } from "../components/user-dropdown";
 import { useAppStore } from "../store";
 import { ProtectedRoute } from "../components/protected-route";
+
+
+interface FlipCardProps {
+  front: React.ReactNode;
+  back: React.ReactNode;
+}
+
+const FlipCard: React.FC<FlipCardProps> = ({ front, back }) => {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  return (
+    <div className="relative w-full h-[600px]">
+      <div className="mb-4">
+        <Button onClick={() => setIsFlipped(!isFlipped)}>
+          {isFlipped ? "Show Logs" : "Show Requests"}
+        </Button>
+      </div>
+      <AnimatePresence initial={false} mode="wait">
+        <motion.div
+          key={isFlipped ? "back" : "front"}
+          animate={{ rotateY: 0, opacity: 1 }}
+          exit={{ rotateY: 180, opacity: 0 }}
+          initial={{ rotateY: isFlipped ? -180 : 0, opacity: 0 }}
+          style={{
+            backfaceVisibility: "hidden",
+            width: "100%",
+            height: "100%",
+            position: "absolute"
+          }}
+          transition={{ duration: 0.6 }}
+        >
+          {isFlipped ? back : front}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
 
 function DashboardContent() {
   const [query, setQuery] = useState("");
@@ -47,6 +83,8 @@ function DashboardContent() {
     userRequests,
     fetchUserRequests,
   } = useAppStore();
+
+  const [showLogs, setShowLogs] = useState(true);
 
   const handleSubmit = async () => {
     try {
@@ -136,12 +174,12 @@ function DashboardContent() {
               <h3 className="text-xl font-bold text-white">Result</h3>
               <Button
                 isIconOnly
-                color="primary"
                 aria-label="Retry"
-                onClick={handleRetry}
+                color="primary"
                 disabled={isLoading}
+                onClick={handleRetry}
               >
-                <ArrowTurnDownLeftIcon className="w-5 h-5" />
+                <ArrowPathIcon className="w-5 h-5" />
               </Button>
             </CardHeader>
             <CardBody className="relative z-10">
@@ -166,104 +204,122 @@ function DashboardContent() {
         </motion.div>
       )}
 
-      <Card className="mb-4">
+      <Card className="w-full h-[600px] overflow-hidden">
         <CardHeader className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Logs</h3>
-          <Button onClick={fetchLogs}>Fetch Logs</Button>
+          <div className="flex">
+            <Button
+              color={showLogs ? "primary" : "default"}
+              onClick={() => setShowLogs(true)}
+              className="rounded-r-none"
+            >
+              Logs
+            </Button>
+            <Button
+              color={!showLogs ? "primary" : "default"}
+              onClick={() => setShowLogs(false)}
+              className="rounded-l-none"
+            >
+              Requests
+            </Button>
+          </div>
+          <Button onClick={showLogs ? fetchLogs : fetchUserRequests}>
+            Fetch {showLogs ? "Logs" : "Requests"}
+          </Button>
         </CardHeader>
         <CardBody>
-          {logs.length > 0 ? (
-            <Table aria-label="Logs table">
-              <TableHeader>
-                <TableColumn>Timestamp</TableColumn>
-                <TableColumn>Level</TableColumn>
-                <TableColumn>Module</TableColumn>
-                <TableColumn>Message</TableColumn>
-                <TableColumn>URL</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {logs.map((log, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      {new Date(log.timestamp).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${getLevelColor(log.level)}`}
-                      >
-                        {log.level}
-                      </span>
-                    </TableCell>
-                    <TableCell>{log.module}</TableCell>
-                    <TableCell>{log.message}</TableCell>
-                    <TableCell>{log.url}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p>
-              No logs available. Click 'Fetch Logs' to retrieve the latest logs.
-            </p>
-          )}
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">User Requests</h3>
-          <Button onClick={fetchUserRequests}>Fetch Requests</Button>
-        </CardHeader>
-        <CardBody>
-          {userRequests.length > 0 ? (
-            <Table aria-label="User Requests table">
-              <TableHeader>
-                <TableColumn>ID</TableColumn>
-                <TableColumn>Query</TableColumn>
-                <TableColumn>Status</TableColumn>
-                <TableColumn>Result</TableColumn>
-                <TableColumn>Created At</TableColumn>
-                <TableColumn>Updated At</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {userRequests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>{request.id}</TableCell>
-                    <TableCell>{request.user_query}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          request.status === "success"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {request.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>{request.result}</TableCell>
-                    <TableCell>
-                      {format(
-                        new Date(request.created_at),
-                        "yyyy-MM-dd HH:mm:ss",
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {format(
-                        new Date(request.updated_at),
-                        "yyyy-MM-dd HH:mm:ss",
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p>
-              No user requests available. Click 'Fetch Requests' to retrieve the
-              latest requests.
-            </p>
-          )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={showLogs ? "logs" : "requests"}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {showLogs ? (logs.length > 0 ? (
+                <Table aria-label="Logs table">
+                  <TableHeader>
+                    <TableColumn>Timestamp</TableColumn>
+                    <TableColumn>Level</TableColumn>
+                    <TableColumn>Module</TableColumn>
+                    <TableColumn>Message</TableColumn>
+                    <TableColumn>URL</TableColumn>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.map((log, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          {new Date(log.timestamp).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${getLevelColor(log.level)}`}
+                          >
+                            {log.level}
+                          </span>
+                        </TableCell>
+                        <TableCell>{log.module}</TableCell>
+                        <TableCell>{log.message}</TableCell>
+                        <TableCell>{log.url}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p>
+                  No logs available. Click 'Fetch Logs' to retrieve the latest
+                  logs.
+                </p>
+              )
+              ) : userRequests.length > 0 ? (
+                <Table aria-label="User Requests table">
+                  <TableHeader>
+                    <TableColumn>ID</TableColumn>
+                    <TableColumn>Query</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn>Result</TableColumn>
+                    <TableColumn>Created At</TableColumn>
+                    <TableColumn>Updated At</TableColumn>
+                  </TableHeader>
+                  <TableBody>
+                    {userRequests.map((request) => (
+                      <TableRow key={request.id}>
+                        <TableCell>{request.id}</TableCell>
+                        <TableCell>{request.user_query}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${request.status === "success"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                              }`}
+                          >
+                            {request.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>{request.result}</TableCell>
+                        <TableCell>
+                          {format(
+                            new Date(request.created_at),
+                            "yyyy-MM-dd HH:mm:ss",
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {format(
+                            new Date(request.updated_at),
+                            "yyyy-MM-dd HH:mm:ss",
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p>
+                  No user requests available. Click 'Fetch Requests' to retrieve the
+                  latest requests.
+                </p>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </CardBody>
       </Card>
     </div>
